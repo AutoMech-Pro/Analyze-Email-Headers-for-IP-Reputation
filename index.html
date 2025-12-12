@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automating Email Security with n8n & Gmail</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <!-- Font Awesome for Icons (Webfont version, handled as text/css classes, no SVG injection in body) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Palette: Brilliant Blues & Tech -->
+    <!-- 
+        Palette Name: Cyber Defense Blue
+        Primary: #2563EB (Blue 600)
+        Secondary: #06B6D4 (Cyan 500)
+        Accent: #EF4444 (Red 500)
+        Success: #10B981 (Emerald 500)
+        Dark: #1E293B (Slate 800)
+        Light: #F8FAFC (Slate 50)
+    -->
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC;
+            color: #1E293B;
+        }
+
+        /* Chart Container Styling Rules */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Max width constraint */
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px; /* Base height */
+            max-height: 400px; /* Max height constraint */
+        }
+
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        /* Custom Flowchart styling without SVG */
+        .flow-step {
+            position: relative;
+        }
+        .flow-arrow::after {
+            content: '➤';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94A3B8;
+            font-size: 1.2rem;
+        }
+        @media (max-width: 768px) {
+            .flow-arrow::after {
+                content: '⬇';
+                right: 50%;
+                top: auto;
+                bottom: -25px;
+                transform: translateX(50%);
+            }
+        }
+
+        /* Card Hover Effects */
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+
+    <!-- 
+        Source Material Integration Plan:
+        1. Narrative: Follow the guide's logical flow: Setup -> Trigger -> Analysis -> Decision -> Action.
+        2. Visuals: 
+           - Workflow steps (HTML/CSS Flow)
+           - Protocol breakdown (Chart.js Bar)
+           - Threat Scoring (Plotly Gauge)
+           - Header Priority (Chart.js Pie)
+           - Logic Decision Tree (HTML/CSS)
+        3. Constraints: NO SVG, NO Mermaid, split labels > 16 chars.
+    -->
+</head>
+<body class="antialiased">
+
+    <!-- Hero Section -->
+    <header class="bg-gradient-to-r from-slate-900 to-blue-900 text-white pt-20 pb-24 px-6 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto text-center relative z-10">
+            <div class="inline-block bg-blue-500 bg-opacity-20 text-blue-200 px-4 py-1 rounded-full text-sm font-semibold mb-6 border border-blue-400/30">
+                n8n Security Automation Guide
+            </div>
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
+                Analyze Email Headers for <span class="text-cyan-400">IP Reputation</span> & Spoofing
+            </h1>
+            <p class="text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
+                Automate your Security Operations Center (SecOps) by integrating Gmail, n8n, and AbuseIPDB. Detect phishing attempts and malicious actors in real-time.
+            </p>
+        </div>
+        <!-- Decorative Background Elements (CSS only) -->
+        <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+            <div class="absolute top-10 left-10 text-9xl">🛡️</div>
+            <div class="absolute bottom-10 right-10 text-9xl">🔒</div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-6 -mt-16 pb-20 relative z-20">
+        
+        <!-- Workflow Overview (Goal: Organize) -->
+        <!-- Justification: A high-level visual roadmap is essential to understand the tutorial's scope before diving into details. -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-12 border-t-4 border-cyan-500">
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">Workflow Architecture</h2>
+            <p class="text-slate-600 mb-8">This workflow automates the analysis of incoming emails through five distinct stages, transforming raw header data into actionable security intelligence.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Step 1 -->
+                <div class="flow-step flow-arrow bg-blue-50 p-6 rounded-xl border border-blue-100 text-center hover-lift">
+                    <div class="text-4xl mb-3">📧</div>
+                    <h3 class="font-bold text-blue-900">Trigger</h3>
+                    <p class="text-xs text-blue-600 mt-2">Gmail Monitor</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="flow-step flow-arrow bg-blue-50 p-6 rounded-xl border border-blue-100 text-center hover-lift">
+                    <div class="text-4xl mb-3">⚙️</div>
+                    <h3 class="font-bold text-blue-900">Parse</h3>
+                    <p class="text-xs text-blue-600 mt-2">Extract Headers</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="flow-step flow-arrow bg-blue-50 p-6 rounded-xl border border-blue-100 text-center hover-lift">
+                    <div class="text-4xl mb-3">🌍</div>
+                    <h3 class="font-bold text-blue-900">Enrich</h3>
+                    <p class="text-xs text-blue-600 mt-2">IP Reputation</p>
+                </div>
+                <!-- Step 4 -->
+                <div class="flow-step flow-arrow bg-blue-50 p-6 rounded-xl border border-blue-100 text-center hover-lift">
+                    <div class="text-4xl mb-3">🧠</div>
+                    <h3 class="font-bold text-blue-900">Analyze</h3>
+                    <p class="text-xs text-blue-600 mt-2">Risk Logic</p>
+                </div>
+                <!-- Step 5 -->
+                <div class="bg-blue-50 p-6 rounded-xl border border-blue-100 text-center hover-lift">
+                    <div class="text-4xl mb-3">🚨</div>
+                    <h3 class="font-bold text-blue-900">Alert</h3>
+                    <p class="text-xs text-blue-600 mt-2">Slack/Email</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- SECTION 1: Header Analysis (Goal: Compare/Inform) -->
+            <!-- Justification: Email headers are complex. Comparing the authentication protocols helps users understand what is being verified. -->
+            <section class="col-span-12 lg:col-span-6 bg-white rounded-2xl shadow-md p-6">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-slate-800">Authentication Protocols</h3>
+                    <p class="text-sm text-slate-500 mt-2">
+                        The "Code Node" extracts these three critical security headers to verify the sender's identity. Failing these checks is a primary indicator of spoofing.
+                    </p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="authProtocolsChart"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-slate-500">
+                    <div class="p-2 bg-slate-50 rounded"><strong>SPF</strong><br>Authorized IP?</div>
+                    <div class="p-2 bg-slate-50 rounded"><strong>DKIM</strong><br>Tampered?</div>
+                    <div class="p-2 bg-slate-50 rounded"><strong>DMARC</strong><br>Policy Check</div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: IP Extraction Logic (Goal: Inform/Process) -->
+            <!-- Justification: Visualizing the fallback logic for IP extraction (X-Originating vs Received-SPF) clarifies the JavaScript code functionality. -->
+            <section class="col-span-12 lg:col-span-6 bg-white rounded-2xl shadow-md p-6">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-slate-800">IP Extraction Priority</h3>
+                    <p class="text-sm text-slate-500 mt-2">
+                        Not all emails provide the sender IP in the same field. The workflow uses a priority logic to ensure the correct IP is sent to the reputation engine.
+                    </p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="ipPriorityChart"></canvas>
+                </div>
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-800 border-l-4 border-blue-500">
+                    <strong>Logic Tip:</strong> The code first checks <code>X-Originating-IP</code>. If missing, it uses regex to parse the <code>Received-SPF</code> header generated by Google.
+                </div>
+            </section>
+
+            <!-- SECTION 3: Reputation Scoring (Goal: Inform/Measure) -->
+            <!-- Justification: The Abuse Confidence Score is the core metric for decision making. A gauge chart is the standard way to visualize risk scores. -->
+            <section class="col-span-12 lg:col-span-8 bg-white rounded-2xl shadow-md p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800">Abuse Confidence Score</h3>
+                        <p class="text-sm text-slate-500 mt-1">
+                            Provided by AbuseIPDB. This score determines the severity of the threat.
+                        </p>
+                    </div>
+                    <span class="mt-2 md:mt-0 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200">Critical Threshold: > 20</span>
+                </div>
+                
+                <!-- Plotly Gauge Chart -->
+                <div class="chart-container" id="reputationGauge"></div>
+
+                <div class="mt-6 text-sm text-slate-600 bg-slate-50 p-4 rounded-lg">
+                    <h4 class="font-bold mb-2">Why 20?</h4>
+                    <p>While a score of 100 is definitely malicious, AbuseIPDB recommends treating anything above 20 as suspicious for email traffic. The workflow queries the last 90 days of history.</p>
+                </div>
+            </section>
+
+            <!-- SECTION 4: Decision Logic Matrix (Goal: Organize/Logic) -->
+            <!-- Justification: The "If Node" logic is complex to read in text. A visual matrix clarifies exactly what combinations trigger an alert. -->
+            <section class="col-span-12 lg:col-span-4 bg-white rounded-2xl shadow-md p-6 flex flex-col">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-slate-800">Decision Logic</h3>
+                    <p class="text-sm text-slate-500 mt-1">
+                        How the workflow classifies an email based on the enriched data.
+                    </p>
+                </div>
+
+                <div class="flex-grow space-y-4">
+                    <!-- Condition 1 -->
+                    <div class="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                        <h4 class="font-bold text-red-900 flex items-center">
+                            <span class="mr-2">🛑</span> Malicious / High Risk
+                        </h4>
+                        <ul class="text-sm text-red-800 mt-2 ml-6 list-disc">
+                            <li>Abuse Score > 20</li>
+                            <li><strong>OR</strong> DMARC == 'fail'</li>
+                        </ul>
+                    </div>
+
+                    <!-- Condition 2 -->
+                    <div class="border-l-4 border-orange-400 bg-orange-50 p-4 rounded-r-lg">
+                        <h4 class="font-bold text-orange-900 flex items-center">
+                            <span class="mr-2">⚠️</span> Suspicious / Spoofing
+                        </h4>
+                        <ul class="text-sm text-orange-800 mt-2 ml-6 list-disc">
+                            <li>SPF == 'fail'</li>
+                            <li><strong>OR</strong> SPF == 'softfail'</li>
+                        </ul>
+                    </div>
+
+                    <!-- Condition 3 -->
+                    <div class="border-l-4 border-emerald-500 bg-emerald-50 p-4 rounded-r-lg">
+                        <h4 class="font-bold text-emerald-900 flex items-center">
+                            <span class="mr-2">✅</span> Safe / Clean
+                        </h4>
+                        <ul class="text-sm text-emerald-800 mt-2 ml-6 list-disc">
+                            <li>Score < 20</li>
+                            <li><strong>AND</strong> Auth Passes</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+             <!-- SECTION 5: Prerequisites Checklist (Goal: Organize) -->
+             <section class="col-span-12 bg-slate-800 text-white rounded-2xl shadow-lg p-8">
+                <h3 class="text-2xl font-bold mb-6 border-b border-slate-600 pb-4">Implementation Checklist</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="flex items-start">
+                        <div class="bg-cyan-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">1</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Gmail API</h4>
+                            <p class="text-slate-300 text-sm mt-2">Configure OAuth2 credentials in n8n. Create a specific label (e.g., "ToScan") to avoid rate limits.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-cyan-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">2</div>
+                        <div>
+                            <h4 class="font-bold text-lg">AbuseIPDB Key</h4>
+                            <p class="text-slate-300 text-sm mt-2">Sign up for a free API key. It offers a generous tier sufficient for most SMB monitoring needs.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-cyan-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">3</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Alert Channel</h4>
+                            <p class="text-slate-300 text-sm mt-2">Set up a Slack webhook or dedicated email address to receive the formatted security reports.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-8 text-center text-slate-500 text-sm">
+        <p>&copy; 2025 n8n Security Guide Visualization. Based on community workflows.</p>
+    </footer>
+
+    <script>
+        // --- HELPER FUNCTIONS ---
+
+        /**
+         * Splits a label into an array of strings if it exceeds the max character limit.
+         * Used to wrap long labels in Chart.js.
+         */
+        function wrapLabel(label, maxChars = 16) {
+            if (typeof label !== 'string' || label.length <= maxChars) {
+                return label;
+            }
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                if ((currentLine + ' ' + words[i]).length <= maxChars) {
+                    currentLine += ' ' + words[i];
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        // --- CHART CONFIGURATIONS ---
+
+        // 1. Auth Protocols Chart (Bar Chart)
+        const ctxAuth = document.getElementById('authProtocolsChart').getContext('2d');
+        const authLabels = ['SPF (Sender Policy)', 'DKIM (Key Integrity)', 'DMARC (Compliance)'];
+        const processedAuthLabels = authLabels.map(l => wrapLabel(l));
+
+        new Chart(ctxAuth, {
+            type: 'bar',
+            data: {
+                labels: processedAuthLabels,
+                datasets: [{
+                    label: 'Security Impact Weight',
+                    data: [85, 90, 95], // Conceptual weight for visualization
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.7)', // Blue
+                        'rgba(6, 182, 212, 0.7)',  // Cyan
+                        'rgba(16, 185, 129, 0.7)'  // Emerald
+                    ],
+                    borderColor: [
+                        'rgb(59, 130, 246)',
+                        'rgb(6, 182, 212)',
+                        'rgb(16, 185, 129)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { display: false },
+                        grid: { display: false }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                if (Array.isArray(label)) return label.join(' ');
+                                return label;
+                            },
+                            label: function(context) {
+                                return "Checks " + (context.dataIndex === 0 ? "IP Identity" : context.dataIndex === 1 ? "Msg Integrity" : "Domain Policy");
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 2. IP Priority Chart (Doughnut Chart)
+        const ctxIp = document.getElementById('ipPriorityChart').getContext('2d');
+        const ipLabels = ['X-Originating-IP (Primary)', 'Received-SPF (Fallback)', 'No IP Found'];
+        const processedIpLabels = ipLabels.map(l => wrapLabel(l));
+
+        new Chart(ctxIp, {
+            type: 'doughnut',
+            data: {
+                labels: processedIpLabels,
+                datasets: [{
+                    data: [60, 35, 5], // Conceptual frequency distribution
+                    backgroundColor: [
+                        '#3B82F6', // Blue 500
+                        '#93C5FD', // Blue 300
+                        '#E2E8F0'  // Slate 200
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            font: { size: 10 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                if (Array.isArray(label)) return label.join(' ');
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 3. Reputation Gauge (Plotly)
+        // Note: Plotly is used here for the Gauge chart as Chart.js doesn't support it natively without plugins.
+        // We strictly use canvas/webgl implicitly where possible, avoiding explicit SVG-only features.
+        
+        const gaugeData = [
+            {
+                type: "indicator",
+                mode: "gauge+number",
+                value: 20, // The Threshold Value
+                title: { text: "Abuse Confidence Threshold", font: { size: 16, color: "#1E293B" } },
+                gauge: {
+                    axis: { range: [null, 100], tickwidth: 1, tickcolor: "#1E293B" },
+                    bar: { color: "#1E293B", thickness: 0.1 }, // Marker line
+                    bgcolor: "white",
+                    borderwidth: 2,
+                    bordercolor: "#E2E8F0",
+                    steps: [
+                        { range: [0, 20], color: "#10B981" }, // Safe Green
+                        { range: [20, 50], color: "#FBBF24" }, // Suspicious Yellow
+                        { range: [50, 100], color: "#EF4444" } // Malicious Red
+                    ],
+                    threshold: {
+                        line: { color: "red", width: 4 },
+                        thickness: 0.75,
+                        value: 20
+                    }
+                }
+            }
+        ];
+
+        const gaugeLayout = {
+            margin: { t: 40, b: 20, l: 30, r: 30 },
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0)",
+            font: { family: "Inter, sans-serif" },
+            height: 350,
+            autosize: true
+        };
+
+        const config = { 
+            responsive: true, 
+            displayModeBar: false,
+            renderer: 'canvas' // Prefer canvas rendering
+        };
+
+        Plotly.newPlot('reputationGauge', gaugeData, gaugeLayout, config);
+
+    </script>
+</body>
+</html>
